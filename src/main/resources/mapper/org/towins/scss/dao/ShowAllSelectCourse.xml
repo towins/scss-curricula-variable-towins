@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.towins.scss.dao.ShowAllSelectCourseDao">
+    <resultMap type="org.towins.scss.dto.vo.CourseVoForSelect" id="courseMapForAllSelect">
+        <id property="id" column="id"/>
+        <result property="name" column="name"/>
+        <result property="teacher" column="teacher"/>
+        <result property="serviceTeacher" column="service_teacher"/>
+        <result property="serviceTeacherTel" column="service_teacher_tel"/>
+        <result property="beginTeachTime" column="begin_teach_time"/>
+        <result property="classroom" column="classroom"/>
+        <result property="maxAmount" column="max_amount"/>
+        <result property="currentAmount" column="current_amount"/>
+        <result property="credit" column="credit"/>
+        <result property="optType" column="sc_opt_type"/>
+    </resultMap>
+    <select id="queryAllSelectedCourse" resultMap="courseMapForAllSelect">
+        <![CDATA[
+          SELECT
+            c.id,c.name,c.teacher,c.service_teacher,c.service_teacher_tel,
+            c.begin_teach_time,c.classroom,c.max_amount,c.current_amount,c.credit,si.opt_type si_opt_type
+          FROM course c JOIN sc_info si ON (c.id=si.course_id) JOIN cadre ca ON (ca.id=si.cadre_id)
+          WHERE current_timestamp < begin_teach_time
+          AND si.cadre_id=#{cadreId}
+          AND c.id IN (
+            SELECT course_id
+            FROM sc_info
+            WHERE (opt_type='XK' OR opt_type='PD') AND cadre_id=#{cadreId}
+          );
+        ]]>
+    </select>
+</mapper>

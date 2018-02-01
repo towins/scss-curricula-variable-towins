@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.towins.scss.dao.SelectCourseDao">
+    <insert id="selectCourse" parameterType="org.towins.scss.dto.vo.SelectInfoVoForWrite">
+            <![CDATA[
+          replace into sc_info
+          (cadre_id,course_id,opt_type,opt_time)
+          values
+          (#{cadreId},#{courseId},#{optType},CURRENT_TIMESTAMP);
+        ]]>
+    </insert>
+    <update id="cancelCourse" parameterType="long">
+        <![CDATA[
+          UPDATE sc_info
+          SET opt_type='TK',opt_time=CURRENT_TIMESTAMP
+          WHERE cadre_id=#{cadreId} AND course_id=#{courseId}
+        ]]>
+    </update>
+
+    <update id="addOneCurrentAmount" parameterType="long">
+        <![CDATA[
+          UPDATE course
+          SET current_amount = current_amount + 1
+          WHERE id=#{courseId}
+        ]]>
+    </update>
+
+    <update id="subOneCurrentAmount" parameterType="long">
+        <![CDATA[
+          UPDATE course
+          SET current_amount = current_amount - 1
+          WHERE id=#{courseId}
+        ]]>
+    </update>
+</mapper>

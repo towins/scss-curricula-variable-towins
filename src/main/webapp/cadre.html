@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>人员信息管理</title>
+    <link rel="stylesheet" href="css/jquery-ui.css">
+    <link rel="stylesheet" href="css/bootstrap.css">
+    <link rel="stylesheet" href="css/uikit.css"/>
+    <link rel="stylesheet" href="css/components/datepicker.css"/>
+    <link rel="stylesheet" href="css/components/form-select.css"/>
+    <link rel="stylesheet" href="css/uikit.almost-flat.css"/>
+    <link rel="stylesheet" href="css/uikit.gradient.css"/>
+    <link rel="stylesheet" href="css/components/notify.css"/>
+</head>
+<style>
+    table.dataintable {
+        margin-top:15px;
+        border-collapse:collapse;
+        border:1px solid #aaa;
+        width:100%;
+    }
+    table.dataintable th {
+        vertical-align:baseline;
+        padding:5px 15px 5px 6px;
+        background-color:#3F3F3F;
+        border:1px solid #3F3F3F;
+        text-align:left;
+        color:#fff;
+    }
+    table.dataintable td {
+        vertical-align:text-top;
+        padding:6px 15px 6px 6px;
+        border:1px solid #aaa;
+    }
+    table.dataintable tr:nth-child(odd) {
+        background-color:#F5F5F5;
+    }
+    table.dataintable tr:nth-child(even) {
+        background-color:#fff;
+    }
+
+</style>
+<body>
+<div id="main">
+ <div class="uk-container uk-container-center">
+     <div>
+         <nav class="uk-navbar">
+             <div class="uk-form uk-navbar-brand">
+                 <input class="uk-form-width-small" v-model="qo.name" placeholder="姓名"/>
+                 <input class="uk-form-width-small" v-model="qo.employee_card" placeholder="工作证">
+                 <button class="uk-button" @click="list()">查询</button>
+                 <button class="uk-button" data-uk-offcanvas="{target:'#saveform'}">添加</button>
+                 <button class="uk-button" title="仅支持单一修改" data-uk-offcanvas="{target:'#updateform'}" @click="selectCadre()"
+                         :disabled="cId.length==0">更新
+                 </button>
+                 <button class="uk-button" title="支持多选删除" @click="delById()" :disabled="cId.length==0">删除</button>
+             </div>
+         </nav>
+     </div>
+     <div>
+         <table class="dataintable">
+             <tr>
+                 <th></th>
+                 <th>名字</th>
+                 <th>工作证</th>
+                 <th>性别</th>
+                 <th>电话</th>
+                 <th>邮箱</th>
+             </tr>
+             <tr v-for="c in cadreList">
+                 <td><input v-model="cId" type="checkbox" :value="c.idStr"/></td>
+                 <td>{{c.name}}</td>
+                 <td>{{c.employee_card}}</td>
+                 <td>{{c.sex}}</td>
+                 <td>{{c.tel}}</td>
+                 <td>{{c.email}}</td>
+             </tr>
+         </table>
+         <div class="uk-text-right">
+             <span>第{{page.pageNo}}页/共{{page.pageAmount}}页</span>
+             <span>第{{page.first+1}}~{{page.last}}条/共{{page.amount}}条数据</span>
+             <button @click="setPageNo(1)"><i class="uk-icon-arrow-left"></i></button>
+             <button @click="setPageNo(qo.pageNo-1)"><i class="uk-icon-angle-double-left"></i></button>
+             <input v-model="qo.pageNo" class="uk-form-width-mini uk-text-center"/>
+             <button @click="setPageNo(qo.pageNo+1)"><i class="uk-icon-angle-double-right"></i></button>
+             <button @click="setPageNo(page.pageAmount)"><i class="uk-icon-arrow-right"></i></button>
+         </div>
+     </div>
+     <form id="saveform" class="uk-offcanvas">
+         <div class="uk-offcanvas-bar uk-offcanvas-bar-flip">
+             <div class="uk-panel-box uk-panel-box-primary uk-height-1-1">
+                 <div class="uk-panel-title">
+                     <i class="uk-icon-plus"></i>
+                     添加学员信息
+                 </div>
+                 <div class="uk-form">
+                     <div><input v-model="cadreSave.name" class="uk-width-1-1" placeholder="姓名"/></div>
+
+                     <div><input v-model="cadreSave.employee_card" class="uk-width-1-1" placeholder="工作证">
+                     </div>
+                     <div>
+                         <label><input v-model="cadreSave.sex" value="M" type="radio"/> <i
+                                 class="uk-icon-male"></i></label>
+                         <label><input v-model="cadreSave.sex" value="F" type="radio"/> <i
+                                 class="uk-icon-female"></i></label>
+                     </div>
+                     <div><input v-model="cadreSave.tel" class="uk-width-1-1" placeholder="电话"/></div>
+                     <div><input v-model="cadreSave.email" class="uk-width-1-1" placeholder="邮箱"/></div>
+                     <div>
+                         <button type="button" @click="save">保存</button>
+                         <button type="button" @click="closeForm">取消</button>
+                     </div>
+                 </div>
+             </div>
+         </div>
+     </form>
+     <form id="updateform" class="uk-offcanvas">
+         <div class="uk-offcanvas-bar uk-offcanvas-bar-flip uk-width-medium-1-3 uk-width-small-1-1">
+             <div class="uk-panel-box uk-panel-box-primary uk-height-1-1">
+                 <div class="uk-panel-title">
+                     <i class="uk-icon-edit"></i>
+                     更新学员信息
+                     <div class="uk-form">
+                         <div><input v-model="cadreUpdate.name" class="uk-width-1-1" placeholder="姓名"/></div>
+
+                         <div><input v-model="cadreUpdate.employee_card" class="uk-width-1-1" placeholder="工作证">
+                         </div>
+                         <div>
+                             <label><input v-model="cadreUpdate.sex" value="M" type="radio"/> <i
+                                     class="uk-icon-male"></i></label>
+                             <label><input v-model="cadreUpdate.sex" value="F" type="radio"/> <i
+                                     class="uk-icon-female"></i></label>
+                         </div>
+                         <div><input v-model="cadreUpdate.tel" class="uk-width-1-1" placeholder="电话"/></div>
+                         <div><input v-model="cadreUpdate.email" class="uk-width-1-1" placeholder="邮箱"/></div>
+                         <div>
+                             <button type="button" @click="update">更新</button>
+                             <button type="button" @click="closeForm">取消</button>
+                         </div>
+                     </div>
+             </div>
+           </div>
+         </div>
+     </form>
+ </div>
+</div>
+</body>
+<script src="js/jquery-3.2.1.js"></script>
+<script src="js/uikit.js"></script>
+<script src="js/components/datepicker.js"></script>
+<script src="js/components/form-select.js"></script>
+<script src="js/components/parallax.js"></script>
+<script src="js/vue.js"></script>
+<script src="js/axios.js"></script>
+<script src="js/components/notify.js"></script>
+<script>
+    let vm= new Vue({
+        el:'#main',
+        data: {
+            cId: [],
+            qo: {
+            name: '',
+            employee_card: '',
+            pageNo: 1,
+            pageSize: 10
+              },
+            page: {
+                pageNo: 1,
+                pageSize: 10
+            },
+            cadreList:[],
+            cadreSave:{
+                sex:'M'
+            },
+            cadreUpdate:{}
+        },
+        created: function () {
+           this.list();
+        },
+        methods:{
+            list: function () {
+                axios({
+                    url: '/cadre/list',
+                    method: 'POST',
+                    data: this.qo,
+                }).then((res) => {
+                    if (res.data.isEmptyDate) {
+                        UIkit.notify(res.data.msg);
+                    }
+                    this.cadreList = res.data.list;
+                    this.page = res.data.pageInfo;
+                });
+            },
+            setPageNo: function (n) {
+                if (n > this.page.pageAmount) {
+                    n = this.page.pageAmount;
+                }
+                if (n < 1) {
+                    n = 1;
+                }
+                this.qo.pageNo = n;
+                this.list();
+            },
+            save: function () {
+                axios({
+                    url: '/cadre/save',
+                    method: 'POST',
+                    data: this.cadreSave
+                }).then((res) => {
+                    UIkit.notify({
+                        pos: 'top-right',
+                        status: 'success',
+                        message: "<i class='uk-icon-check'></i>" + res.data.msg
+                    });
+                    this.list();
+                });
+                vm.closeForm();
+                $('#saveform')[0].reset();
+                this.cadreSave = {
+                    gender: 'M'
+                };
+            },
+            delById: function () {
+                UIkit.modal.confirm("确认要删除已选数据吗？", function () {
+                    $.ajax({
+                        url: '/cadre/del',
+                        type: "DELETE",
+                        dataType: "json",
+                        data:JSON.stringify(vm.cId),
+                        contentType: "application/json"
+                    }).then((res) => {
+                        vm.list();
+                        vm.cId = [];
+                        UIkit.notify({
+                            pos: 'top-right',
+                            status: 'success',
+                            message: "<i class='uk-icon-check'></i>" + res.data.msg
+                        });
+                    });
+                }, {
+                    labels: {
+                        Cancel: '取消',
+                        Ok: '确定'
+                    },
+                    center: true
+                });
+            },
+            update: function () {
+                axios({
+                    url: '/cadre/update',
+                    method: 'PUT',
+                    data: this.cadreUpdate
+                }).then((res) => {
+                    UIkit.notify({
+                        pos: 'top-right',
+                        status: 'success',
+                        message: "<i class='uk-icon-check'></i>" + res.data.msg
+                    });
+                    this.list();
+                });
+                this.cadreUpdate = {};
+                vm.closeForm();
+            },
+            selectCadre: function () {
+                axios({
+                    url: "/cadre/selectCadre" + this.cId,
+                    method: 'GET'
+                }).then((res) => {
+                    this.cadreUpdate = res.data;
+                });
+            },
+            closeForm: function () {
+                $.UIkit.offcanvas.hide();
+            },
+        },
+
+    });
+
+    $(function () {
+
+    });
+</script>
+</html>0
